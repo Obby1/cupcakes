@@ -20,3 +20,13 @@ c2 = Cupcake(
 
 db.session.add_all([c1, c2])
 db.session.commit()
+
+
+
+# {
+# 	"flavor": "apple",
+# 	"size": "super big",
+# 	"rating": "10.0",
+# 	"image": "https://thestayathomechef.com/wp-content/uploads/2017/12/Most-Amazing-Chocolate-Cupcakes-1-small.jpg"
+	
+# }
