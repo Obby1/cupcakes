@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 from app import app
-from models import db, Cupcake
+from models import db, Cupcake, connect_db
 
 # Use test database and don't clutter tests with SQL
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///cupcakes_test'
@@ -10,10 +10,15 @@ app.config['SQLALCHEMY_ECHO'] = False
 # Make Flask errors be real errors, rather than HTML pages with error info
 app.config['TESTING'] = True
 
-app.app_context().push()
+
+connect_db(app)
+
 
 db.drop_all()
 db.create_all()
+
+app.app_context().push()
+
 
 
 CUPCAKE_DATA = {
@@ -109,3 +114,42 @@ class CupcakeViewsTestCase(TestCase):
             })
 
             self.assertEqual(Cupcake.query.count(), 2)
+
+    def test_patch_cupcake(self):
+        """test update cupcake data 1 to equal cupcake data 2"""
+        with app.test_client() as client:
+            url = "/api/cupcakes"
+            resp = client.patch(f"{url}/{self.cupcake.id}", json = CUPCAKE_DATA_2)
+            self.assertEqual(resp.status_code, 200)
+            data = resp.json
+            self.assertEqual(data, {
+                "cupcake": {
+                    "id": self.cupcake.id,
+                    "flavor": "TestFlavor2",
+                    "size": "TestSize2",
+                    "rating": 10,
+                    "image": "http://test.com/cupcake2.jpg"
+                }
+            })
+
+    def test_delete_cupcake(self):
+        """test deleting cupcake removes from db"""
+        with app.test_client() as client:
+            url = "/api/cupcakes"
+            resp = client.delete(f"{url}/{self.cupcake.id}")
+            self.assertEqual(resp.status_code, 200)
+            cupcake = Cupcake.query.get(self.cupcake.id)
+            self.assertFalse(cupcake)
+
+
+
+# @app.route('/api/cupcakes/<int:id>', methods = ["PATCH"])
+# def update_cupcake(id):
+#     cupcake = Cupcake.query.get_or_404(id)
+#     cupcake.id = id
+#     cupcake.flavor = request.json.get("flavor", cupcake.flavor)
+#     cupcake.size = request.json.get("size", cupcake.size)
+#     cupcake.rating = request.json.get("rating", cupcake.rating)
+#     cupcake.image = request.json.get("image", cupcake.image)
+#     db.session.commit()
+#     return jsonify(cupcake = cupcake.serialize())
